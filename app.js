@@ -1,108 +1,63 @@
 const { useState, useEffect } = React;
 
 const CONTENT_DATA = [
-    {
-        id: 'pot-prop',
-        category: 'Potenciação',
-        title: 'Propriedades da Base',
-        description: 'Domina a multiplicação e divisão de potências de mesma base.',
-        theory: [
-            "Na multiplicação de potências de mesma base, mantém-se a base e somam-se os expoentes.",
-            "Na divisão, mantém-se a base e subtraem-se os expoentes.",
-            "Potência de potência: multiplicam-se os expoentes."
-        ],
-        formulas: [
-            { label: "Produto", math: "aⁿ · aᵐ = aⁿ⁺ᵐ" },
-            { label: "Divisão", math: "aⁿ / aᵐ = aⁿ⁻ᵐ" },
-            { label: "Potência", math: "(aⁿ)ᵐ = aⁿ˙ᵐ" }
-        ],
-        quiz: {
-            question: "Qual o resultado simplificado de (x²)³ · x⁴?",
-            options: ["x⁹", "x¹⁰", "x²⁴", "x⁵"],
-            correct: 1
-        }
-    },
-    {
-        id: 'pot-neg',
-        category: 'Potenciação',
-        title: 'Expoentes Negativos',
-        description: 'Entende como inverter a base para eliminar o sinal negativo.',
-        theory: [
-            "Um expoente negativo indica o inverso do número.",
-            "Para frações, basta inverter o numerador com o denominador."
-        ],
-        formulas: [
-            { label: "Inverso", math: "a⁻ⁿ = 1/aⁿ" },
-            { label: "Fração", math: "(a/b)⁻ⁿ = (b/a)ⁿ" }
-        ],
-        quiz: {
-            question: "Quanto vale 2⁻³?",
-            options: ["-8", "1/6", "1/8", "6"],
-            correct: 2
-        }
-    },
-    {
-        id: 'rad-simp',
-        category: 'Radiciação',
-        title: 'Simplificação de Raízes',
-        description: 'Extração de fatores de dentro do radical através da fatoração.',
-        theory: [
-            "Fatoramos o número dentro da raiz.",
-            "Grupos de fatores iguais ao índice da raiz podem sair do radical."
-        ],
-        formulas: [
-            { label: "Simplificação", math: "√(a²·b) = a√b" }
-        ],
-        quiz: {
-            question: "Como fica √72 simplificada?",
-            options: ["36√2", "6√2", "2√6", "12√6"],
-            correct: 1
-        }
-    }
+    // ... (Dados das matérias: Aritmética, Radiciação, Álgebra, etc.)
 ];
 
 const App = () => {
-    const [activeTab, setActiveTab] = useState(CONTENT_DATA[0].id);
+    const [active, setActive] = useState(CONTENT_DATA[0].id);
     const [completed, setCompleted] = useState({});
-    
-    const current = CONTENT_DATA.find(item => item.id === activeTab);
-    const progress = (Object.keys(completed).length / CONTENT_DATA.length) * 100;
+    const [exampleLevel, setExampleLevel] = useState('facil');
+    const [feedback, setFeedback] = useState(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [quizStep, setQuizStep] = useState(0);
 
-    // Atualiza ícones do Lucide sempre que a aba mudar
-    useEffect(() => {
-        if (window.lucide) {
-            window.lucide.createIcons();
-        }
-    }, [activeTab]);
+    const curr = CONTENT_DATA.find(d => d.id === active);
+    const currentQuiz = curr.quizzes[quizStep];
+    const prog = (Object.keys(completed).length / CONTENT_DATA.length) * 100;
 
-    const handleAnswer = (index) => {
-        if (index === current.quiz.correct) {
-            setCompleted({ ...completed, [activeTab]: true });
+    useEffect(() => { 
+        if (window.lucide) window.lucide.createIcons(); 
+        setFeedback(null);
+        setQuizStep(0);
+        window.scrollTo(0,0);
+    }, [active]);
+
+    const handleQuiz = (idx) => {
+        if (idx === currentQuiz.corr) {
+            setFeedback('correct');
+            setTimeout(() => {
+                if (quizStep < curr.quizzes.length - 1) {
+                    setQuizStep(quizStep + 1);
+                    setFeedback(null);
+                } else {
+                    setCompleted({...completed, [active]: true});
+                }
+            }, 800);
         } else {
-            alert("Resposta errada! Analisa a teoria e tenta novamente.");
+            setFeedback('wrong');
+            setTimeout(() => setFeedback(null), 1200);
         }
     };
 
+    const levelStyles = {
+        facil: "text-emerald-500 bg-emerald-500/10",
+        medio: "text-blue-500 bg-blue-500/10",
+        dificil: "text-orange-500 bg-orange-500/10",
+        extremo: "text-red-500 bg-red-500/10"
+    };
+
+    // Retorno do Componente (JSX)
     return (
-        <div className="flex h-screen flex-col md:flex-row bg-slate-50">
-            {/* Barra Lateral (Sidebar) */}
-            <aside className="w-full md:w-80 bg-slate-900 text-white flex flex-col shadow-2xl z-20">
-                <div className="p-8 border-b border-slate-800">
-                    <h1 className="text-2xl font-black tracking-tighter flex items-center gap-2">
-                        <span className="text-blue-500">M</span>MATHMASTER <span className="text-[10px] bg-blue-600 px-1 rounded">PRO</span>
-                    </h1>
-                    <div className="mt-6">
-                        <div className="flex justify-between text-[10px] font-bold mb-1 text-slate-400 uppercase tracking-widest">
-                            <span>Progresso Aluno</span>
-                            <span>{Math.round(progress)}%</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                            <div 
-                                className="h-full bg-blue-500 transition-all duration-1000" 
-                                style={{ width: `${progress}%` }}
-                            ></div>
-                        </div>
-                    </div>
+        <div className="flex h-screen flex-col md:flex-row bg-slate-50 overflow-hidden">
+            {/* ... Renderização da Interface ... */}
+        </div>
+    );
+};
+
+// Inicialização do React no DOM
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
                 </div>
 
                 <nav className="flex-1 overflow-y-auto custom-scroll p-4 space-y-2">
